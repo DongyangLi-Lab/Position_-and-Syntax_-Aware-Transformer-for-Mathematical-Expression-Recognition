@@ -1,0 +1,168 @@
+arguments:
+  task:
+    - test
+    - render
+
+dataset:
+  path: data
+  encoding: ISO-8859-1
+  csv: true
+  dpi: 100
+  target_dpi: 600
+
+  train:
+    files:
+      - image_dir: formula_images_crop
+        csv: im2latexv2_train_cut.csv
+
+    cache: false
+    shuffle: true
+    drop_last: true
+    batch_size: 20
+    num_workers: 14
+
+    transforms:
+      - AddWhitespace
+      - RandomResize
+      - WhiteBorder
+      - DownUpResize
+      - GaussianBlur
+      - ColorJitter
+      - White2Black
+
+    no_sampling: false
+    no_arrays: false
+    only_basic: false
+
+  val:
+    files:
+      - image_dir: formula_images_crop
+        csv: im2latexv2_validate_cut.csv
+
+    cache: false
+    shuffle: false
+    drop_last: false
+    batch_size: 20
+    num_workers: 14
+
+    transforms:
+      - WhiteBorder
+      - White2Black
+
+    no_sampling: false
+    no_arrays: false
+    only_basic: true
+
+  test:
+    files:
+      - image_dir: formula_images_crop
+        csv: im2latexv2_test_cut.csv
+
+    cache: false
+    shuffle: false
+    drop_last: false
+    batch_size: 40
+    num_workers: 14
+
+    transforms:
+      - WhiteBorder
+      - White2Black
+
+    no_sampling: false
+    no_arrays: false
+    only_basic: false
+
+  vocab_file: data/vocab.txt
+
+model:
+  model_save_path: checkpoints/
+
+  grammar_emb_dim: 256
+  grammar_hidden_dim: 512
+  max_len: 150
+
+  image:
+    height: 768
+    width: 2400
+
+  encoder: CvT
+  encoder_emb: 384
+
+  decoder: transformer
+  softmax: true
+  counting: false
+
+  cvt:
+    s1_emb_dim: 64
+    s1_emb_kernel: 48
+    s1_emb_stride: 12
+    s1_proj_kernel: 3
+    s1_kv_proj_stride: 2
+    s1_heads: 1
+    s1_depth: 1
+    s1_mlp_mult: 4
+
+    s2_emb_dim: 192
+    s2_emb_kernel: 3
+    s2_emb_stride: 2
+    s2_proj_kernel: 3
+    s2_kv_proj_stride: 2
+    s2_heads: 3
+    s2_depth: 2
+    s2_mlp_mult: 4
+
+    s3_emb_kernel: 3
+    s3_emb_stride: 2
+    s3_proj_kernel: 3
+    s3_kv_proj_stride: 2
+    s3_heads: 4
+    s3_depth: 10
+    s3_mlp_mult: 4
+
+    dropout: 0.0
+
+    use_lst: true
+    lst_depths: [0, 1, 1]
+    lst_num_ref_points: 8
+    lst_num_samples: 4
+    lst_offset_scale: 0.25
+    lst_ffn_hidden_ratio: 0.25
+    lst_ffn_kernel_size: 7
+    lst_dropout: 0.0
+    lst_residual_scale_init: 0.0001
+    lst_gaussian_sigma: 0.35
+
+  transformer:
+    num_decoder_layers: 4
+    hidden_size: 512
+    n_head: 8
+    dropout: 0.1
+
+train:
+  epochs: 60
+  data_frac: 0.01
+  grammar_epochs: 10
+  grammar_lr: 0.0001
+  grammar_batch_size: 2048
+  init_lr: 0.0001
+  lr_descent: [10000, 1]
+  criterion: CrossEntropyLoss
+  save_each: 5
+  early_stop: 40
+  wait_n_epochs: 60
+  fp16: true
+  grad_clip_value: null
+  freeze_feature_extractor: -1
+  freeze_encoder: -1
+  predict_style: false
+  style_loss_factor: 1
+
+val:
+  each: 60
+  more_information: true
+  metric: Edit
+
+test:
+  each: 20
+  grammar_batch_size: 2048
+  more_information: true
